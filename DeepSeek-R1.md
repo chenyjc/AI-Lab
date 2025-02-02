@@ -75,3 +75,7 @@ export https_proxy="http://192.168.31.101:8080"
 
 curl -fsSL https://ollama.com/install.sh | sh
 ```
+### 9. 运行DeepSeek R1 14B
+```
+ollama run deepseek-r1:14b --verbose
+```
