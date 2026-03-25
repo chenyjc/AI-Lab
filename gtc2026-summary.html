@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NVIDIA GTC 2026 主题演讲总结</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 40px 20px;
+            background: linear-gradient(90deg, #76b900, #5a8f00);
+            margin-bottom: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(118, 185, 0, 0.3);
+        }
+        
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        header .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        header .event-info {
+            margin-top: 15px;
+            font-size: 0.95em;
+            opacity: 0.85;
+        }
+        
+        .nav-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 30px;
+            justify-content: center;
+        }
+        
+        .nav-btn {
+            padding: 12px 24px;
+            background: rgba(255,255,255,0.1);
+            border: 2px solid #76b900;
+            color: #fff;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.95em;
+        }
+        
+        .nav-btn:hover, .nav-btn.active {
+            background: #76b900;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(118, 185, 0, 0.4);
+        }
+        
+        .page {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .page.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .card {
+            background: rgba(255,255,255,0.08);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .card h2 {
+            color: #76b900;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            border-bottom: 2px solid #76b900;
+            padding-bottom: 10px;
+        }
+        
+        .card h3 {
+            color: #4ecdc4;
+            margin: 20px 0 15px 0;
+            font-size: 1.4em;
+        }
+        
+        .card ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .card ul li {
+            padding: 10px 0 10px 30px;
+            position: relative;
+            line-height: 1.6;
+        }
+        
+        .card ul li::before {
+            content: "▸";
+            color: #76b900;
+            position: absolute;
+            left: 10px;
+            font-weight: bold;
+        }
+        
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(118,185,0,0.2), rgba(78,205,196,0.2));
+            border-left: 4px solid #76b900;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 10px 10px 0;
+        }
+        
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 25px 0;
+        }
+        
+        .stat-item {
+            background: linear-gradient(135deg, #76b900, #5a8f00);
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(118, 185, 0, 0.3);
+        }
+        
+        .stat-item .number {
+            font-size: 2.5em;
+            font-weight: bold;
+            display: block;
+        }
+        
+        .stat-item .label {
+            font-size: 0.9em;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+        
+        .partner-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .partner-item {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid rgba(118,185,0,0.3);
+        }
+        
+        .model-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .model-card {
+            background: rgba(78,205,196,0.15);
+            border: 1px solid #4ecdc4;
+            border-radius: 12px;
+            padding: 20px;
+        }
+        
+        .model-card h4 {
+            color: #4ecdc4;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 30px;
+            margin-top: 40px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            opacity: 0.7;
+        }
+        
+        .emoji {
+            font-size: 1.3em;
+            margin-right: 8px;
+        }
+        
+        .tag {
+            display: inline-block;
+            background: #76b900;
+            color: #000;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.85em;
+            margin: 5px 5px 5px 0;
+            font-weight: bold;
+        }
+        
+        @media (max-width: 768px) {
+            header h1 { font-size: 1.8em; }
+            .nav-btn { padding: 10px 16px; font-size: 0.85em; }
+            .card { padding: 20px; }
+            .stat-item .number { font-size: 2em; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎮 NVIDIA GTC 2026</h1>
+            <div class="subtitle">主题演讲完整总结</div>
+            <div class="event-info">
+                📍 圣何塞 SAP Center &nbsp;|&nbsp; 📅 2026 年 3 月 16-19 日 &nbsp;|&nbsp; 🎤 Jensen Huang
+            </div>
+            <div style="margin-top: 20px;">
+                <a href="https://www.youtube.com/watch?v=jw_o0xr8MWU" target="_blank" style="display: inline-block; background: #ff0000; color: #fff; padding: 12px 30px; border-radius: 30px; text-decoration: none; font-weight: bold; font-size: 1.1em; box-shadow: 0 5px 20px rgba(255,0,0,0.4); transition: all 0.3s ease;">
+                    ▶️ 观看完整 Keynote 视频
+                </a>
+            </div>
+        </header>
+        
+        <nav class="nav-container">
+            <button class="nav-btn active" onclick="showPage('overview')">📋 概览</button>
+            <button class="nav-btn" onclick="showPage('architecture')">🖥️ 计算架构</button>
+            <button class="nav-btn" onclick="showPage('openclaw')">🤖 OpenClaw</button>
+            <button class="nav-btn" onclick="showPage('nemotron')">🧠 Nemotron 联盟</button>
+            <button class="nav-btn" onclick="showPage('physical')">🤖 物理 AI</button>
+            <button class="nav-btn" onclick="showPage('products')">📦 产品更新</button>
+            <button class="nav-btn" onclick="showPage('market')">📈 市场预测</button>
+        </nav>
+        
+        <!-- 概览页 -->
+        <div id="overview" class="page active">
+            <div class="card">
+                <h2><span class="emoji">⏱️</span>重要 Demo 时间戳</h2>
+                <div class="highlight-box" style="background: linear-gradient(135deg, rgba(255,0,0,0.2), rgba(255,100,100,0.2)); border-left-color: #ff0000;">
+                    <p><strong>点击下方时间戳直接跳转到 YouTube 视频对应位置</strong></p>
+                </div>
+                <ul>
+                    <li><a href="https://www.youtube.com/watch?v=jw_o0xr8MWU&t=0s" target="_blank">🎬 0:00</a> - 开场视频：Token 作为 AI 基本单位</li>
+                    <li><a href="https://www.youtube.com/watch?v=jw_o0xr8MWU&t=180s" target="_blank">🎤 3:00</a> - Jensen Huang 登台演讲</li>
+                    <li><a href="https://www.youtube.com/watch?v=jw_o0xr8MWU&t=420s" target="_blank">🎮 7:00</a> - GeForce 历史与 DLSS 5 发布</li>
+                    <li><a href="https://www.youtube.com/watch?v=jw_o0xr8MWU&t=720s" target="_blank">☁️ 12:00</a> - 云合作伙伴生态（IBM、Dell、AWS、Azure 等）</li>
+                    <li><a href="https://www.youtube.com/watch?v=jw_o0xr8MWU&t=960s" target="_blank">📊 16:00</a> - AI Native 公司崛起与 $150B 投资</li>
+                    <li><a href="https://www.youtube.com/watch?v=jw_o0xr8MWU&t=1200s" target="_blank">💰 20:00</a> - $1 万亿美元收入预测</li>
+                    <li><a href="https://www.youtube.com/watch?v=jw_o0xr8MWU&t=1440s" target="_blank">🖥️ 24:00</a> - Vera Rubin 平台发布</li>
+                    <li><a href="https://www.youtube.com/watch?v=jw_o0xr8MWU&t=1680s" target="_blank">🔮 28:00</a> - Feynman 架构与 Rosa CPU</li>
+                    <li><a href="https://www.youtube.com/watch?v=jw_o0xr8MWU&t=1920s" target="_blank">🚀 32:00</a> - 太空计算宣布</li>
+                    <li><a href="https://www.youtube.com/watch?v=jw_o0xr8MWU&t=2160s" target="_blank">🤖 36:00</a> - OpenClaw 支持与 NemoClaw 栈</li>
+                    <li><a href="https://www.youtube.com/watch?v=jw_o0xr8MWU&t=2400s" target="_blank">🧠 40:00</a> - Nemotron 联盟六大模型</li>
+                    <li><a href="https://www.youtube.com/watch?v=jw_o0xr8MWU&t=2640s" target="_blank">🤖 44:00</a> - 物理 AI 与机器人合作伙伴</li>
+                    <li><a href="https://www.youtube.com/watch?v=jw_o0xr8MWU&t=2880s" target="_blank">🚗 48:00</a> - 自动驾驶合作伙伴（BYD、现代、日产、吉利）</li>
+                    <li><a href="https://www.youtube.com/watch?v=jw_o0xr8MWU&t=3120s" target="_blank">❄️ 52:00</a> - Olaf 惊喜登场演示</li>
+                    <li><a href="https://www.youtube.com/watch?v=jw_o0xr8MWU&t=3300s" target="_blank">🎵 55:00</a> - 闭幕式：机器人篝火歌曲</li>
+                </ul>
+            </div>
+            
+            <div class="card">
+                <h2><span class="emoji">🎯</span>大会亮点</h2>
+                <div class="highlight-box">
+                    <p><strong>本届 GTC 是 NVIDIA 历史上规模最大的开发者大会，涵盖 AI 五层蛋糕的每一个层面，从基础设施到应用生态全面展示。</strong></p>
+                </div>
+                
+                <div class="stat-grid">
+                    <div class="stat-item">
+                        <span class="number">1,000+</span>
+                        <span class="label">技术会议</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="number">2,000+</span>
+                        <span class="label">演讲嘉宾</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="number">450+</span>
+                        <span class="label">赞助商</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="number">20 周年</span>
+                        <span class="label">CUDA  Anniversary</span>
+                    </div>
+                </div>
+                
+                <h3>核心主题</h3>
+                <ul>
+                    <li><span class="tag">推理之王</span> NVIDIA 的 token 成本全球最优，得益于极致协同设计</li>
+                    <li><span class="tag">AI 工厂</span> 新一代数据中心和计算基础设施</li>
+                    <li><span class="tag">OpenClaw</span> 人类历史上最流行的开源项目</li>
+                    <li><span class="tag">物理 AI</span> 从数字代理延伸到现实世界的 AI</li>
+                    <li><span class="tag">太空计算</span> 将 AI 数据中心送入轨道</li>
+                </ul>
+            </div>
+            
+            <div class="card">
+                <h2><span class="emoji">🎬</span>精彩彩蛋</h2>
+                <ul>
+                    <li><strong>闭幕式惊喜：</strong>AI 版 Jensen 化身 (TJ) 与机器人围篝火唱总结歌曲，回顾大会重要发布</li>
+                    <li><strong>Olaf 登场：</strong>《冰雪奇缘》雪宝由 NVIDIA 物理 AI 驱动，在 Omniverse 中学习行走，现场从数字屏幕走出</li>
+                    <li><strong>Build-a-Claw 活动：</strong>参会者可亲手创建自己的 AI 代理，定义个性和工具</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- 计算架构页 -->
+        <div id="architecture" class="page">
+            <div class="card">
+                <h2><span class="emoji">🖥️</span>NVIDIA Vera Rubin 平台</h2>
+                <p>全新全栈计算平台，专为 Agentic AI 时代设计</p>
+                <p style="margin-top: 15px;">
+                    <a href="https://www.youtube.com/watch?v=jw_o0xr8MWU&t=1440s" target="_blank" class="tag" style="text-decoration: none; color: #000;">⏱️ 24:00 观看 Demo</a>
+                </p>
+                
+                <div class="highlight-box">
+                    <p>"Vera Rubin 代表整个系统，垂直集成，从软件到端到端优化为一个巨型系统"</p>
+                </div>
+                
+                <h3>平台组成</h3>
+                <div class="stat-grid">
+                    <div class="stat-item">
+                        <span class="number">7</span>
+                        <span class="label">芯片</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="number">5</span>
+                        <span class="label">机架系统</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="number">1</span>
+                        <span class="label">超级计算机</span>
+                    </div>
+                </div>
+                
+                <h3>核心组件</h3>
+                <ul>
+                    <li><strong>NVIDIA Vera CPU</strong> - 专为 Agentic AI 设计的全新 CPU 架构</li>
+                    <li><strong>BlueField-4 STX</strong> - 新一代存储架构，获得广泛行业采用</li>
+                    <li><strong>NVIDIA Kyber</strong> - 支持铜缆和共封装光学的扩展技术</li>
+                    <li><strong>Spectrum 级光学扩展</strong> - 大规模网络互联</li>
+                </ul>
+            </div>
+            
+            <div class="card">
+                <h2><span class="emoji">🔮</span>Feynman 架构（下一代）</h2>
+                <p>超越 Vera Rubin 的下一代计算平台</p>
+                <p style="margin-top: 15px;">
+                    <a href="https://www.youtube.com/watch?v=jw_o0xr8MWU&t=1680s" target="_blank" class="tag" style="text-decoration: none; color: #000;">⏱️ 28:00 观看 Demo</a>
+                </p>
+                
+                <h3>核心组件</h3>
+                <ul>
+                    <li><strong>NVIDIA Rosa CPU</strong> - 以 Rosalind Franklin 命名，她的 X 射线晶体学揭示了 DNA 结构</li>
+                    <li><strong>LP40 LPU</strong> - 下一代语言处理单元</li>
+                    <li><strong>BlueField-5</strong> - 新一代数据处理单元</li>
+                    <li><strong>CX10</strong> - 新一代网络适配器</li>
+                </ul>
+                
+                <div class="highlight-box">
+                    <p>Feynman 世代推进 AI 工厂的每一个支柱：计算、内存、存储、网络和安全</p>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2><span class="emoji">🚀</span>太空计算</h2>
+                <p>
+                    <a href="https://www.youtube.com/watch?v=jw_o0xr8MWU&t=1920s" target="_blank" class="tag" style="text-decoration: none; color: #000;">⏱️ 32:00 观看宣布</a>
+                </p>
+                <ul>
+                    <li><strong>NVIDIA Space-1 Vera Rubin</strong> - 将 AI 数据中心送入轨道</li>
+                    <li>扩展加速计算从地球到太空</li>
+                    <li>Vera Rubin 架构致敬发现暗物质的天文学家</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- OpenClaw 页 -->
+        <div id="openclaw" class="page">
+            <div class="card">
+                <h2><span class="emoji">🤖</span>OpenClaw 生态</h2>
+                <p>
+                    <a href="https://www.youtube.com/watch?v=jw_o0xr8MWU&t=2160s" target="_blank" class="tag" style="text-decoration: none; color: #000;">⏱️ 36:00 观看宣布</a>
+                </p>
+                
+                <div class="highlight-box">
+                    <p><span class="emoji">🏆</span> Jensen 称 OpenClaw 为<strong>"人类历史上最流行的开源项目"</strong></p>
+                </div>
+                
+                <h3>OpenClaw 是什么</h3>
+                <ul>
+                    <li>开源的"代理计算机操作系统"</li>
+                    <li>使创建个人代理成为可能</li>
+                    <li>单条命令即可部署 AI 代理</li>
+                    <li>可扩展工具和上下文</li>
+                </ul>
+                
+                <h3>NVIDIA 全面支持</h3>
+                <p>NVIDIA 宣布在其全平台支持 OpenClaw，让开发者能够：</p>
+                <ul>
+                    <li>安全地构建 AI 代理</li>
+                    <li>部署到各种基础设施</li>
+                    <li>在 NVIDIA 加速硬件上运行</li>
+                </ul>
+                
+                <div class="highlight-box">
+                    <p><strong>"世界上每一家公司今天都需要有一个 OpenClaw 策略"</strong> — Jensen Huang</p>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2><span class="emoji">🛡️</span>NVIDIA OpenShell & NemoClaw</h2>
+                
+                <h3>NVIDIA OpenShell 运行时</h3>
+                <ul>
+                    <li>企业级 AI 代理安全运行时</li>
+                    <li>策略执行引擎</li>
+                    <li>网络护栏</li>
+                    <li>隐私路由</li>
+                </ul>
+                
+                <h3>NVIDIA NemoClaw 栈</h3>
+                <ul>
+                    <li>完整的代理安全解决方案</li>
+                    <li>可作为"所有 SaaS 公司的策略引擎"</li>
+                    <li>确保技术可在企业内部安全部署</li>
+                </ul>
+            </div>
+            
+            <div class="card">
+                <h2><span class="emoji">🛠️</span>Build-a-Claw 活动</h2>
+                <p>GTC 参会者专属体验</p>
+                <ul>
+                    <li><strong>时间：</strong>3 月 16-19 日（周一 13-17 点，周二至周四 8-17 点）</li>
+                    <li><strong>地点：</strong>GTC Park</li>
+                    <li><strong>内容：</strong>定制和部署主动、始终在线的 AI 代理</li>
+                    <li>命名代理、定义个性、授予工具访问权限</li>
+                    <li>使用现场云算力或自带 DGX Spark/GeForce RTX 笔记本</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Nemotron 联盟页 -->
+        <div id="nemotron" class="page">
+            <div class="card">
+                <h2><span class="emoji">🤝</span>Nemotron 联盟</h2>
+                <p>NVIDIA 扩大开放模型生态系统，联合全球领先 AI 实验室推进开放前沿模型</p>
+                <p>
+                    <a href="https://www.youtube.com/watch?v=jw_o0xr8MWU&t=2400s" target="_blank" class="tag" style="text-decoration: none; color: #000;">⏱️ 40:00 观看介绍</a>
+                </p>
+                
+                <div class="model-grid">
+                    <div class="model-card">
+                        <h4>📝 NVIDIA Nemotron</h4>
+                        <p>语言和推理模型家族</p>
+                    </div>
+                    <div class="model-card">
+                        <h4>🌍 NVIDIA Cosmos</h4>
+                        <p>世界模型和视觉理解</p>
+                    </div>
+                    <div class="model-card">
+                        <h4>🦾 NVIDIA Isaac GR00T</h4>
+                        <p>通用人形机器人模型</p>
+                    </div>
+                    <div class="model-card">
+                        <h4>🚗 NVIDIA Alpaymayo</h4>
+                        <p>自动驾驶模型</p>
+                    </div>
+                    <div class="model-card">
+                        <h4>🧬 NVIDIA BioNeMo</h4>
+                        <p>生物学和化学模型</p>
+                    </div>
+                    <div class="model-card">
+                        <h4>🌦️ NVIDIA Earth-2</h4>
+                        <p>天气和气候预测模型</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2><span class="emoji">📚</span>CUDA-X 库</h2>
+                <p>Jensen 称之为公司的"皇冠珠宝"</p>
+                <ul>
+                    <li>覆盖所有 AI 垂直领域的加速库</li>
+                    <li>汽车、金融服务、医疗保健、工业、媒体、量子、零售、机器人、电信</li>
+                    <li>支持 AI 生命周期的每个阶段</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- 物理 AI 页 -->
+        <div id="physical" class="page">
+            <div class="card">
+                <h2><span class="emoji">🤖</span>物理 AI (Physical AI)</h2>
+                <p>将 AI 从数字代理延伸到可在现实世界导航的物理 AI</p>
+                <p>
+                    <a href="https://www.youtube.com/watch?v=jw_o0xr8MWU&t=2640s" target="_blank" class="tag" style="text-decoration: none; color: #000;">⏱️ 44:00 观看介绍</a>
+                </p>
+                
+                <div class="highlight-box">
+                    <p>NVIDIA 正在与全球机器人生态系统合作，将物理 AI 带入现实世界</p>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2><span class="emoji">🚗</span>自动驾驶合作伙伴</h2>
+                <p>NVIDIA 机器人出租车平台的新汽车合作伙伴</p>
+                <p>
+                    <a href="https://www.youtube.com/watch?v=jw_o0xr8MWU&t=2880s" target="_blank" class="tag" style="text-decoration: none; color: #000;">⏱️ 48:00 观看宣布</a>
+                </p>
+                
+                <div class="partner-grid">
+                    <div class="partner-item"><strong>BYD 比亚迪</strong></div>
+                    <div class="partner-item"><strong>Hyundai 现代</strong></div>
+                    <div class="partner-item"><strong>Kia 起亚</strong></div>
+                    <div class="partner-item"><strong>Nissan 日产</strong></div>
+                    <div class="partner-item"><strong>Geely 吉利</strong></div>
+                </div>
+                
+                <h3>Uber 合作</h3>
+                <p>与 Uber 合作将这些车辆部署到其网约车网络中</p>
+            </div>
+            
+            <div class="card">
+                <h2><span class="emoji">🏭</span>工业机器人</h2>
+                <p>与工业机器人巨头合作集成物理 AI 模型和仿真工具</p>
+                
+                <div class="partner-grid">
+                    <div class="partner-item"><strong>ABB</strong></div>
+                    <div class="partner-item"><strong>Universal Robots</strong></div>
+                    <div class="partner-item"><strong>KUKA</strong></div>
+                </div>
+                
+                <p>在生产线部署更智能的机器人</p>
+            </div>
+            
+            <div class="card">
+                <h2><span class="emoji">📡</span>电信边缘 AI</h2>
+                <p>与电信提供商合作，基站演变为边缘 AI 平台</p>
+                
+                <div class="partner-grid">
+                    <div class="partner-item"><strong>T-Mobile</strong></div>
+                </div>
+                
+                <p>在 AI RAN 就绪基础设施上整合物理 AI 应用</p>
+            </div>
+            
+            <div class="card">
+                <h2><span class="emoji">🎮</span>Olaf 演示</h2>
+                <p>主题演讲闭幕惊喜</p>
+                <p>
+                    <a href="https://www.youtube.com/watch?v=jw_o0xr8MWU&t=3120s" target="_blank" class="tag" style="text-decoration: none; color: #000;">⏱️ 52:00 观看 Demo</a>
+                </p>
+                <ul>
+                    <li>《冰雪奇缘》雪宝从数字屏幕走上舞台</li>
+                    <li>由 NVIDIA 物理 AI 栈驱动</li>
+                    <li>Newton 物理引擎提供动力</li>
+                    <li>NVIDIA Omniverse 提供支持</li>
+                    <li>在 Omniverse 中学习行走（非预渲染）</li>
+                    <li>搭载 Jetson 计算机</li>
+                </ul>
+                <div class="highlight-box" style="background: linear-gradient(135deg, rgba(78,205,196,0.2), rgba(118,185,0,0.2)); border-left-color: #4ecdc4;">
+                    <p><strong>这是全场最惊艳的演示之一！Olaf 完全由 AI 实时驱动，展示了 NVIDIA 物理 AI 的强大能力。</strong></p>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2><span class="emoji">🎵</span>闭幕式彩蛋</h2>
+                <p>
+                    <a href="https://www.youtube.com/watch?v=jw_o0xr8MWU&t=3300s" target="_blank" class="tag" style="text-decoration: none; color: #000;">⏱️ 55:00 观看</a>
+                </p>
+                <ul>
+                    <li>AI 版 Jensen 化身 (TJ) 与机器人围篝火</li>
+                    <li>唱总结歌曲回顾大会重要发布</li>
+                    <li>由 NVIDIA 创意团队使用生成式 AI 工具制作</li>
+                    <li>结合多种 AI 模型进行图像和视频生成</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- 产品更新页 -->
+        <div id="products" class="page">
+            <div class="card">
+                <h2><span class="emoji">🎮</span>GeForce 更新</h2>
+                
+                <h3>DLSS 5</h3>
+                <p>
+                    <a href="https://www.youtube.com/watch?v=jw_o0xr8MWU&t=420s" target="_blank" class="tag" style="text-decoration: none; color: #000;">⏱️ 7:00 观看 Demo</a>
+                </p>
+                <div class="highlight-box">
+                    <p>3D 引导神经渲染技术，在本地硬件上实现实时、照片级 4K 性能</p>
+                </div>
+                
+                <ul>
+                    <li>新一代深度学习超级采样</li>
+                    <li>AI 驱动的视觉保真度突破</li>
+                    <li>本地硬件即可运行</li>
+                </ul>
+            </div>
+            
+            <div class="card">
+                <h2><span class="emoji">🏢</span>AI 工厂</h2>
+                
+                <h3>Vera Rubin DSX AI Factory 参考设计</h3>
+                <ul>
+                    <li>标准化 AI 数据中心设计</li>
+                    <li>加速新 AI 产能扩展</li>
+                    <li>广泛的行业支持</li>
+                </ul>
+                
+                <h3>Omniverse DSX 数字孪生蓝图</h3>
+                <ul>
+                    <li>在软件中模拟 AI 工厂</li>
+                    <li>建造前进行虚拟验证</li>
+                    <li>降低部署风险</li>
+                </ul>
+                
+                <h3>DSX Air</h3>
+                <ul>
+                    <li>DSX 平台的一部分</li>
+                    <li>软件模拟 AI 工厂</li>
+                    <li>物理建造前的数字验证</li>
+                </ul>
+            </div>
+            
+            <div class="card">
+                <h2><span class="emoji">☁️</span>云合作伙伴</h2>
+                <p>加速数据处理生态系统合作伙伴</p>
+                <p>
+                    <a href="https://www.youtube.com/watch?v=jw_o0xr8MWU&t=720s" target="_blank" class="tag" style="text-decoration: none; color: #000;">⏱️ 12:00 观看介绍</a>
+                </p>
+                
+                <div class="partner-grid">
+                    <div class="partner-item"><strong>IBM</strong></div>
+                    <div class="partner-item"><strong>Dell 戴尔</strong></div>
+                    <div class="partner-item"><strong>Google Cloud</strong></div>
+                    <div class="partner-item"><strong>AWS</strong></div>
+                    <div class="partner-item"><strong>Microsoft Azure</strong></div>
+                    <div class="partner-item"><strong>Oracle</strong></div>
+                    <div class="partner-item"><strong>CoreWeave</strong></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 市场预测页 -->
+        <div id="market" class="page">
+            <div class="card">
+                <h2><span class="emoji">📈</span>市场预测</h2>
+                <p>
+                    <a href="https://www.youtube.com/watch?v=jw_o0xr8MWU&t=1200s" target="_blank" class="tag" style="text-decoration: none; color: #000;">⏱️ 20:00 观看宣布</a>
+                </p>
+                
+                <div class="stat-grid">
+                    <div class="stat-item">
+                        <span class="number">$1T</span>
+                        <span class="label">2025-2027 预期收入</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="number">100 万倍</span>
+                        <span class="label">计算需求增长</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="number">$150B</span>
+                        <span class="label">AI 初创投资</span>
+                    </div>
+                </div>
+                
+                <div class="highlight-box">
+                    <p><strong>"我相信计算需求在过去几年增长了 100 万倍"</strong> — Jensen Huang</p>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2><span class="emoji">🚀</span>AI Native 公司崛起</h2>
+                <p>
+                    <a href="https://www.youtube.com/watch?v=jw_o0xr8MWU&t=960s" target="_blank" class="tag" style="text-decoration: none; color: #000;">⏱️ 16:00 观看介绍</a>
+                </p>
+                <ul>
+                    <li>全新公司类型涌现</li>
+                    <li>知名公司：OpenAI、Anthropic 等</li>
+                    <li>更多新兴公司不断出现</li>
+                    <li>过去一年"直线上升"</li>
+                </ul>
+                
+                <h3>技术繁荣历史</h3>
+                <p>Jensen 回顾了催生最新技术浪潮的技术发展历史</p>
+            </div>
+            
+            <div class="card">
+                <h2><span class="emoji">👑</span>推理之王</h2>
+                <p>NVIDIA 的 token 成本全球最优</p>
+                
+                <div class="highlight-box">
+                    <p>得益于<strong>极致协同设计</strong>（Extreme Codesign）— 软件和硅片协同设计的流程</p>
+                </div>
+                
+                <ul>
+                    <li>CUDA 20 周年</li>
+                    <li>被称为推动加速计算的"飞轮"</li>
+                    <li>支持 AI 生命周期的每个阶段</li>
+                    <li>"NVIDIA 是 GeForce 建立的公司"</li>
+                </ul>
+            </div>
+            
+            <div class="card">
+                <h2><span class="emoji">🎯</span>五层 AI 蛋糕</h2>
+                <p>本届 GTC 涵盖 AI 的五个层面：</p>
+                <ul>
+                    <li><span class="tag">基础设施</span></li>
+                    <li><span class="tag">芯片系统</span></li>
+                    <li><span class="tag">系统</span></li>
+                    <li><span class="tag">软件</span></li>
+                    <li><span class="tag">应用</span></li>
+                </ul>
+            </div>
+        </div>
+        
+        <footer class="footer">
+            <p>📊 本总结基于 NVIDIA GTC 2026 主题演讲内容整理</p>
+            <p>🤖 由 OpenClaw 助手 Mini 制作</p>
+            <p>📅 2026 年 3 月 24 日</p>
+        </footer>
+    </div>
+    
+    <script>
+        function showPage(pageId) {
+            // 隐藏所有页面
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            
+            // 移除所有按钮激活状态
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // 显示目标页面
+            document.getElementById(pageId).classList.add('active');
+            
+            // 激活对应按钮
+            event.target.classList.add('active');
+            
+            // 滚动到顶部
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
