@@ -1,0 +1,1429 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenClaw 多 Agent 路由完全指南</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            min-height: 100vh;
+            color: #e0e0e0;
+            line-height: 1.7;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 50px 20px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            margin-bottom: 30px;
+            border-radius: 20px;
+            box-shadow: 0 15px 50px rgba(102, 126, 234, 0.4);
+        }
+        
+        header h1 {
+            font-size: 2.8em;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        header .subtitle {
+            font-size: 1.3em;
+            opacity: 0.95;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        header .version {
+            margin-top: 20px;
+            font-size: 0.9em;
+            opacity: 0.8;
+            background: rgba(255,255,255,0.15);
+            padding: 8px 20px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+        
+        .toc {
+            background: rgba(255,255,255,0.08);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .toc h3 {
+            color: #a8b5ff;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        
+        .toc ul {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 10px;
+            list-style: none;
+        }
+        
+        .toc li a {
+            color: #fff;
+            text-decoration: none;
+            padding: 10px 15px;
+            background: rgba(102, 126, 234, 0.3);
+            border-radius: 8px;
+            display: block;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+        
+        .toc li a:hover {
+            background: rgba(102, 126, 234, 0.5);
+            border-color: #667eea;
+            transform: translateX(5px);
+        }
+        
+        .nav-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 30px;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+        }
+        
+        .nav-tab {
+            padding: 14px 28px;
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(102, 126, 234, 0.5);
+            color: #fff;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1em;
+            font-weight: 500;
+        }
+        
+        .nav-tab:hover {
+            background: rgba(102, 126, 234, 0.4);
+            transform: translateY(-2px);
+        }
+        
+        .nav-tab.active {
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-color: #667eea;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.5);
+        }
+        
+        .page {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .page.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .card {
+            background: rgba(255,255,255,0.06);
+            border-radius: 15px;
+            padding: 35px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(255,255,255,0.08);
+            backdrop-filter: blur(10px);
+        }
+        
+        .card h2 {
+            color: #a8b5ff;
+            margin-bottom: 25px;
+            font-size: 2em;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .card h3 {
+            color: #4ecdc4;
+            margin: 30px 0 15px 0;
+            font-size: 1.5em;
+        }
+        
+        .card h4 {
+            color: #ffeaa7;
+            margin: 20px 0 12px 0;
+            font-size: 1.2em;
+        }
+        
+        .card ul, .card ol {
+            margin-left: 25px;
+            margin-bottom: 15px;
+        }
+        
+        .card li {
+            padding: 8px 0;
+            line-height: 1.8;
+        }
+        
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.25), rgba(118, 75, 162, 0.25));
+            border-left: 5px solid #667eea;
+            padding: 25px;
+            margin: 25px 0;
+            border-radius: 0 12px 12px 0;
+        }
+        
+        .highlight-box.warning {
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.2), rgba(255, 159, 67, 0.2));
+            border-left-color: #ff6b6b;
+        }
+        
+        .highlight-box.success {
+            background: linear-gradient(135deg, rgba(78, 205, 196, 0.2), rgba(102, 126, 234, 0.2));
+            border-left-color: #4ecdc4;
+        }
+        
+        .code-block {
+            background: #1e1e2e;
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            border-radius: 10px;
+            padding: 25px;
+            margin: 20px 0;
+            overflow-x: auto;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.9em;
+            line-height: 1.6;
+        }
+        
+        .code-block code {
+            color: #a8b5ff;
+        }
+        
+        .code-title {
+            background: rgba(102, 126, 234, 0.2);
+            padding: 8px 15px;
+            border-radius: 8px 8px 0 0;
+            font-size: 0.85em;
+            color: #a8b5ff;
+            margin-bottom: 0;
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            border-bottom: none;
+        }
+        
+        .code-wrapper {
+            margin: 20px 0;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            margin: 25px 0;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        
+        th {
+            background: rgba(102, 126, 234, 0.3);
+            color: #a8b5ff;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85em;
+            letter-spacing: 0.5px;
+        }
+        
+        tr:hover {
+            background: rgba(102, 126, 234, 0.1);
+        }
+        
+        .tag {
+            display: inline-block;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            color: #fff;
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            margin: 5px 8px 5px 0;
+            font-weight: 600;
+        }
+        
+        .tag.blue { background: linear-gradient(90deg, #4facfe, #00f2fe); }
+        .tag.green { background: linear-gradient(90deg, #43e97b, #38f9d7); }
+        .tag.orange { background: linear-gradient(90deg, #fa709a, #fee140); }
+        .tag.red { background: linear-gradient(90deg, #ff6b6b, #ff8e53); }
+        
+        .step-container {
+            counter-reset: step;
+            margin: 25px 0;
+        }
+        
+        .step {
+            position: relative;
+            padding-left: 60px;
+            margin-bottom: 25px;
+        }
+        
+        .step::before {
+            counter-increment: step;
+            content: counter(step);
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2em;
+            color: #fff;
+        }
+        
+        .step-title {
+            font-weight: 600;
+            color: #a8b5ff;
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 40px;
+            margin-top: 50px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            opacity: 0.7;
+        }
+        
+        .emoji {
+            font-size: 1.4em;
+            margin-right: 8px;
+        }
+        
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 25px;
+            margin: 25px 0;
+        }
+        
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 25px 0;
+        }
+        
+        .info-card {
+            background: rgba(102, 126, 234, 0.15);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+        }
+        
+        .info-card h4 {
+            color: #a8b5ff;
+            margin-bottom: 12px;
+        }
+        
+        .arrow-down {
+            text-align: center;
+            font-size: 2em;
+            color: #667eea;
+            margin: 15px 0;
+        }
+        
+        @media (max-width: 768px) {
+            header h1 { font-size: 2em; }
+            .nav-tabs { flex-direction: column; }
+            .nav-tab { width: 100%; text-align: center; }
+            .card { padding: 20px; }
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🤖 OpenClaw 多 Agent 路由</h1>
+            <div class="subtitle">完整配置指南 - 从入门到精通</div>
+            <div class="version">📚 基于官方文档 v2026.3</div>
+        </header>
+        
+        <nav class="nav-tabs">
+            <button class="nav-tab active" onclick="showPage('intro')">📘 核心概念</button>
+            <button class="nav-tab" onclick="showPage('quickstart')">🚀 快速开始</button>
+            <button class="nav-tab" onclick="showPage('routing')">🎯 路由规则</button>
+            <button class="nav-tab" onclick="showPage('examples')">📝 配置示例</button>
+            <button class="nav-tab" onclick="showPage('sandbox')">🔒 Sandbox 沙盒</button>
+            <button class="nav-tab" onclick="showPage('tools')">🛠️ 工具策略</button>
+            <button class="nav-tab" onclick="showPage('troubleshoot')">🔧 故障排除</button>
+        </nav>
+        
+        <!-- 核心概念页 -->
+        <div id="intro" class="page active">
+            <div class="card">
+                <h2><span class="emoji">🎯</span>什么是多 Agent 架构</h2>
+                <div class="highlight-box">
+                    <p><strong>目标：</strong>在单个运行的 Gateway 中实现多个<strong>隔离的 Agent</strong>（独立的工作空间 + agentDir + 会话），以及多个渠道账号（例如两个 WhatsApp），通过绑定（bindings）将入站消息路由到不同的 Agent。</p>
+                </div>
+                
+                <h3>什么是"一个 Agent"？</h3>
+                <p>一个 <strong>Agent</strong> 是一个完全独立的"大脑"，拥有自己的：</p>
+                <ul>
+                    <li><span class="tag">工作空间</span> 文件、AGENTS.md/SOUL.md/USER.md、本地笔记、角色规则</li>
+                    <li><span class="tag">状态目录 (agentDir)</span> 用于认证配置文件、模型注册表、每个 Agent 的配置</li>
+                    <li><span class="tag">会话存储</span> 聊天记录 + 路由状态，位于 <code>~/.openclaw/agents/&lt;agentId&gt;/sessions</code></li>
+                </ul>
+                
+                <div class="highlight-box warning">
+                    <p><strong>⚠️ 重要：</strong>认证配置文件是<strong>每个 Agent 独立的</strong>。每个 Agent 从自己的 <code>~/.openclaw/agents/&lt;agentId&gt;/agent/auth-profiles.json</code> 读取。主 Agent 的凭证<strong>不会</strong>自动共享。切勿在多个 Agent 之间重用 <code>agentDir</code>（会导致认证/会话冲突）。</p>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2><span class="emoji">📂</span>路径快速映射</h2>
+                
+                <div class="grid-2">
+                    <div class="info-card">
+                        <h4>📄 配置文件</h4>
+                        <p><code>~/.openclaw/openclaw.json</code><br>
+                        或环境变量 <code>OPENCLAW_CONFIG_PATH</code></p>
+                    </div>
+                    <div class="info-card">
+                        <h4>💾 状态目录</h4>
+                        <p><code>~/.openclaw</code><br>
+                        或环境变量 <code>OPENCLAW_STATE_DIR</code></p>
+                    </div>
+                    <div class="info-card">
+                        <h4>📁 工作空间</h4>
+                        <p><code>~/.openclaw/workspace</code><br>
+                        或 <code>~/.openclaw/workspace-&lt;agentId&gt;</code></p>
+                    </div>
+                    <div class="info-card">
+                        <h4>🤖 Agent 目录</h4>
+                        <p><code>~/.openclaw/agents/&lt;agentId&gt;/agent</code><br>
+                        或 <code>agents.list[].agentDir</code></p>
+                    </div>
+                    <div class="info-card">
+                        <h4>💬 会话存储</h4>
+                        <p><code>~/.openclaw/agents/&lt;agentId&gt;/sessions</code></p>
+                    </div>
+                    <div class="info-card">
+                        <h4>🔑 认证配置</h4>
+                        <p><code>~/.openclaw/agents/&lt;agentId&gt;/agent/auth-profiles.json</code></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2><span class="emoji">🔑</span>核心概念术语</h2>
+                
+                <div class="grid-3">
+                    <div class="info-card">
+                        <h4>🧠 agentId</h4>
+                        <p>一个"大脑"（工作空间、每个 Agent 的认证、每个 Agent 的会话存储）</p>
+                    </div>
+                    <div class="info-card">
+                        <h4>📱 accountId</h4>
+                        <p>一个渠道账号实例（例如 WhatsApp 账号 "personal" vs "biz"）</p>
+                    </div>
+                    <div class="info-card">
+                        <h4>🎛️ binding</h4>
+                        <p>通过 <code>(channel, accountId, peer)</code> 将入站消息路由到 <code>agentId</code>，可选包含 guild/team id</p>
+                    </div>
+                </div>
+                
+                <div class="highlight-box" style="margin-top: 25px;">
+                    <p><strong>直接聊天会折叠到</strong> <code>agent:&lt;agentId&gt;:&lt;mainKey&gt;</code>（每个 Agent 的"主会话"，<code>session.mainKey</code>）</p>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2><span class="emoji">👥</span>多 Agent = 多角色、多性格</h2>
+                <p>使用<strong>多 Agent</strong>时，每个 <code>agentId</code> 成为一个<strong>完全隔离的角色</strong>：</p>
+                <ul>
+                    <li><span class="tag blue">不同的电话号码/账号</span> 每个渠道 accountId</li>
+                    <li><span class="tag green">不同的性格</span> 每个 Agent 的工作空间文件（如 AGENTS.md 和 SOUL.md）</li>
+                    <li><span class="tag orange">独立的认证 + 会话</span> 除非明确启用，否则不会跨 Agent 交流</li>
+                </ul>
+                
+                <div class="highlight-box success">
+                    <p>这让<strong>多个人</strong>可以共享一个 Gateway 服务器，同时保持他们的 AI"大脑"和数据隔离。</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 快速开始页 -->
+        <div id="quickstart" class="page">
+            <div class="card">
+                <h2><span class="emoji">🚀</span>快速开始指南</h2>
+                
+                <div class="step-container">
+                    <div class="step">
+                        <div class="step-title">创建每个 Agent 的工作空间</div>
+                        <p>使用向导或手动创建工作空间：</p>
+                        <div class="code-wrapper">
+                            <div class="code-title">创建 Agent 命令</div>
+                            <div class="code-block"><code>openclaw agents add coding
+openclaw agents add social</code></div>
+                        </div>
+                        <p>每个 Agent 获得自己的工作空间，包含 <code>SOUL.md</code>、<code>AGENTS.md</code> 和可选的 <code>USER.md</code>，以及专用的 <code>agentDir</code> 和会话存储（位于 <code>~/.openclaw/agents/&lt;agentId&gt;</code>）。</p>
+                    </div>
+                    
+                    <div class="step">
+                        <div class="step-title">为每个 Agent 创建渠道账号</div>
+                        <p>为你选择的渠道为每个 Agent 创建一个账号：</p>
+                        <ul>
+                            <li><strong>Discord:</strong> 每个 Agent 一个 bot，启用 Message Content Intent，复制每个 token</li>
+                            <li><strong>Telegram:</strong> 通过 BotFather 为每个 Agent 创建一个 bot，复制每个 token</li>
+                            <li><strong>WhatsApp:</strong> 为每个账号链接每个电话号码</li>
+                        </ul>
+                        <div class="code-wrapper">
+                            <div class="code-title">登录渠道账号</div>
+                            <div class="code-block"><code>openclaw channels login --channel whatsapp --account work</code></div>
+                        </div>
+                    </div>
+                    
+                    <div class="step">
+                        <div class="step-title">添加 Agent、账号和绑定</div>
+                        <p>在 <code>agents.list</code> 下添加 Agent，在 <code>channels.&lt;channel&gt;.accounts</code> 下添加渠道账号，并使用 <code>bindings</code> 连接它们（详见配置示例页面）。</p>
+                    </div>
+                    
+                    <div class="step">
+                        <div class="step-title">重启并验证</div>
+                        <div class="code-wrapper">
+                            <div class="code-title">验证命令</div>
+                            <div class="code-block"><code>openclaw gateway restart
+openclaw agents list --bindings
+openclaw channels status --probe</code></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2><span class="emoji">🛠️</span>Agent 助手命令</h2>
+                
+                <div class="grid-3">
+                    <div class="info-card">
+                        <h4>添加新 Agent</h4>
+                        <div class="code-block" style="font-size: 0.85em;"><code>openclaw agents add work</code></div>
+                        <p>使用 Agent 向导添加新的隔离 Agent</p>
+                    </div>
+                    <div class="info-card">
+                        <h4>列出所有 Agent</h4>
+                        <div class="code-block" style="font-size: 0.85em;"><code>openclaw agents list --bindings</code></div>
+                        <p>验证 Agent 配置和绑定</p>
+                    </div>
+                    <div class="info-card">
+                        <h4>渠道状态</h4>
+                        <div class="code-block" style="font-size: 0.85em;"><code>openclaw channels status --probe</code></div>
+                        <p>检查渠道连接状态</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2><span class="emoji">📱</span>单 WhatsApp 号码，多人使用</h2>
+                <p>你可以在<strong>一个 WhatsApp 账号</strong>上路由<strong>不同的 WhatsApp 私信</strong>到不同的 Agent。使用 <code>peer.kind: "direct"</code> 匹配发送者 E.164（如 <code>+15551234567</code>）。回复仍然来自同一个 WhatsApp 号码（没有每个 Agent 的发送者身份）。</p>
+                
+                <div class="highlight-box warning">
+                    <p><strong>重要细节：</strong>直接聊天会折叠到 Agent 的<strong>主会话键</strong>，所以真正的隔离需要<strong>每人一个 Agent</strong>。</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 路由规则页 -->
+        <div id="routing" class="page">
+            <div class="card">
+                <h2><span class="emoji">🎯</span>路由规则详解</h2>
+                <div class="highlight-box">
+                    <p>绑定是<strong>确定性的</strong>，采用<strong>最具体优先</strong>原则。</p>
+                </div>
+                
+                <h3>路由优先级（从高到低）</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>优先级</th>
+                                <th>匹配类型</th>
+                                <th>说明</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="tag red">1</span></td>
+                                <td><code>peer</code> 匹配</td>
+                                <td>精确的 DM/群组/渠道 ID</td>
+                            </tr>
+                            <tr>
+                                <td><span class="tag orange">2</span></td>
+                                <td><code>parentPeer</code> 匹配</td>
+                                <td>线程继承</td>
+                            </tr>
+                            <tr>
+                                <td><span class="tag">3</span></td>
+                                <td><code>guildId + roles</code></td>
+                                <td>Discord 角色路由</td>
+                            </tr>
+                            <tr>
+                                <td><span class="tag blue">4</span></td>
+                                <td><code>guildId</code></td>
+                                <td>Discord 服务器</td>
+                            </tr>
+                            <tr>
+                                <td><span class="tag blue">5</span></td>
+                                <td><code>teamId</code></td>
+                                <td>Slack 团队</td>
+                            </tr>
+                            <tr>
+                                <td><span class="tag green">6</span></td>
+                                <td><code>accountId</code> 匹配</td>
+                                <td>渠道账号匹配</td>
+                            </tr>
+                            <tr>
+                                <td><span class="tag green">7</span></td>
+                                <td>渠道级匹配</td>
+                                <td><code>accountId: "*"</code></td>
+                            </tr>
+                            <tr>
+                                <td><span class="tag">8</span></td>
+                                <td>回退到默认 Agent</td>
+                                <td><code>agents.list[].default</code> 或第一个条目（默认：<code>main</code>）</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="highlight-box warning" style="margin-top: 25px;">
+                    <p><strong>⚠️ 如果同一层级有多个绑定匹配，配置顺序中的第一个获胜。</strong></p>
+                    <p><strong>⚠️ 如果绑定设置多个匹配字段（例如 <code>peer</code> + <code>guildId</code>），所有指定字段都是必需的（AND 语义）。</strong></p>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2><span class="emoji">📊</span>账号作用域详情</h2>
+                <ul>
+                    <li>省略 <code>accountId</code> 的绑定<strong>仅匹配默认账号</strong></li>
+                    <li>使用 <code>accountId: "*"</code> 实现跨所有账号的渠道级回退</li>
+                    <li>如果之后为同一个 Agent 添加相同绑定但带有明确的账号 ID，OpenClaw 会将现有的渠道级绑定<strong>升级</strong>为账号作用域，而不是复制</li>
+                </ul>
+            </div>
+            
+            <div class="card">
+                <h2><span class="emoji">🌐</span>支持多账号的渠道</h2>
+                <p>支持<strong>多账号</strong>的渠道使用 <code>accountId</code> 标识每个登录。每个 <code>accountId</code> 可以路由到不同的 Agent，因此一个服务器可以托管多个电话号码而不会混合会话。</p>
+                
+                <div class="highlight-box success">
+                    <p>如果你想为省略 <code>accountId</code> 时设置渠道级默认账号，设置 <code>channels.&lt;channel&gt;.defaultAccount</code>（可选）。未设置时，OpenClaw 回退到 <code>default</code>（如果存在），否则使用第一个配置的账号 ID（排序后）。</p>
+                </div>
+                
+                <h3>支持的渠道列表</h3>
+                <div class="grid-3">
+                    <div class="info-card">
+                        <h4>主流渠道</h4>
+                        <p>whatsapp, telegram, discord, slack, signal, imessage</p>
+                    </div>
+                    <div class="info-card">
+                        <h4>IRC/聊天</h4>
+                        <p>irc, line, googlechat, mattermost, matrix, nextcloud-talk</p>
+                    </div>
+                    <div class="info-card">
+                        <h4>其他</h4>
+                        <p>bluebubbles, zalo, zalouser, nostr, feishu</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 配置示例页 -->
+        <div id="examples" class="page">
+            <div class="card">
+                <h2><span class="emoji">📝</span>Discord 每个 Agent 一个 Bot</h2>
+                <p>每个 Discord Bot 账号映射到唯一的 <code>accountId</code>。将每个账号绑定到一个 Agent，并为每个 Bot 保留白名单。</p>
+                
+                <div class="code-wrapper">
+                    <div class="code-title">openclaw.json 配置示例</div>
+                    <div class="code-block"><code>{
+  "agents": {
+    "list": [
+      { "id": "main", "workspace": "~/.openclaw/workspace-main" },
+      { "id": "coding", "workspace": "~/.openclaw/workspace-coding" }
+    ]
+  },
+  "bindings": [
+    { "agentId": "main", "match": { "channel": "discord", "accountId": "default" } },
+    { "agentId": "coding", "match": { "channel": "discord", "accountId": "coding" } }
+  ],
+  "channels": {
+    "discord": {
+      "groupPolicy": "allowlist",
+      "accounts": {
+        "default": {
+          "token": "DISCORD_BOT_TOKEN_MAIN",
+          "guilds": {
+            "123456789012345678": {
+              "channels": {
+                "222222222222222222": { "allow": true, "requireMention": false }
+              }
+            }
+          }
+        },
+        "coding": {
+          "token": "DISCORD_BOT_TOKEN_CODING",
+          "guilds": {
+            "123456789012345678": {
+              "channels": {
+                "333333333333333333": { "allow": true, "requireMention": false }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}</code></div>
+                </div>
+                
+                <div class="highlight-box warning">
+                    <p><strong>注意：</strong></p>
+                    <ul>
+                        <li>将每个 Bot 邀请到服务器并启用 Message Content Intent</li>
+                        <li>Token 存放在 <code>channels.discord.accounts.&lt;id&gt;.token</code>（默认账号可使用 <code>DISCORD_BOT_TOKEN</code>）</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2><span class="emoji">📱</span>WhatsApp 每个 Agent 一个号码</h2>
+                <p>在启动 Gateway 之前链接每个账号：</p>
+                
+                <div class="code-wrapper">
+                    <div class="code-title">登录命令</div>
+                    <div class="code-block"><code>openclaw channels login --channel whatsapp --account personal
+openclaw channels login --channel whatsapp --account biz</code></div>
+                </div>
+                
+                <div class="code-wrapper">
+                    <div class="code-title">openclaw.json 配置</div>
+                    <div class="code-block"><code>{
+  "agents": {
+    "list": [
+      {
+        "id": "home",
+        "default": true,
+        "name": "Home",
+        "workspace": "~/.openclaw/workspace-home",
+        "agentDir": "~/.openclaw/agents/home/agent"
+      },
+      {
+        "id": "work",
+        "name": "Work",
+        "workspace": "~/.openclaw/workspace-work",
+        "agentDir": "~/.openclaw/agents/work/agent"
+      }
+    ]
+  },
+  "bindings": [
+    { "agentId": "home", "match": { "channel": "whatsapp", "accountId": "personal" } },
+    { "agentId": "work", "match": { "channel": "whatsapp", "accountId": "biz" } },
+    // 可选的每个 peer 覆盖（示例：将特定群组发送到 work Agent）
+    {
+      "agentId": "work",
+      "match": {
+        "channel": "whatsapp",
+        "accountId": "personal",
+        "peer": { "kind": "group", "id": "1203630...@g.us" }
+      }
+    }
+  ],
+  "tools": {
+    "agentToAgent": {
+      "enabled": false,
+      "allow": ["home", "work"]
+    }
+  },
+  "channels": {
+    "whatsapp": {
+      "accounts": {
+        "personal": {},
+        "biz": {}
+      }
+    }
+  }
+}</code></div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2><span class="emoji">💬</span>示例：WhatsApp 日常聊天 + Telegram 深度工作</h2>
+                <p>按渠道拆分：将 WhatsApp 路由到快速的日常 Agent，将 Telegram 路由到 Opus Agent。</p>
+                
+                <div class="code-wrapper">
+                    <div class="code-title">按渠道路由</div>
+                    <div class="code-block"><code>{
+  "agents": {
+    "list": [
+      {
+        "id": "chat",
+        "name": "Everyday",
+        "workspace": "~/.openclaw/workspace-chat",
+        "model": "anthropic/claude-sonnet-4-6"
+      },
+      {
+        "id": "opus",
+        "name": "Deep Work",
+        "workspace": "~/.openclaw/workspace-opus",
+        "model": "anthropic/claude-opus-4-6"
+      }
+    ]
+  },
+  "bindings": [
+    { "agentId": "chat", "match": { "channel": "whatsapp" } },
+    { "agentId": "opus", "match": { "channel": "telegram" } }
+  ]
+}</code></div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2><span class="emoji">🎯</span>示例：同一渠道，单个 Peer 路由到 Opus</h2>
+                <p>保持 WhatsApp 在快速 Agent 上，但将一个私信路由到 Opus：</p>
+                
+                <div class="code-wrapper">
+                    <div class="code-title">Peer 绑定优先</div>
+                    <div class="code-block"><code>{
+  "agents": {
+    "list": [
+      {
+        "id": "chat",
+        "name": "Everyday",
+        "workspace": "~/.openclaw/workspace-chat",
+        "model": "anthropic/claude-sonnet-4-6"
+      },
+      {
+        "id": "opus",
+        "name": "Deep Work",
+        "workspace": "~/.openclaw/workspace-opus",
+        "model": "anthropic/claude-opus-4-6"
+      }
+    ]
+  },
+  "bindings": [
+    {
+      "agentId": "opus",
+      "match": { "channel": "whatsapp", "peer": { "kind": "direct", "id": "+15551234567" } }
+    },
+    { "agentId": "chat", "match": { "channel": "whatsapp" } }
+  ]
+}</code></div>
+                </div>
+                
+                <div class="highlight-box success">
+                    <p><strong>Peer 绑定始终获胜</strong>，所以将它们保持在渠道级规则之上。</p>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2><span class="emoji">👨‍👩‍👧‍👦</span>示例：家庭 Agent 绑定到 WhatsApp 群组</h2>
+                <p>将专用的家庭 Agent 绑定到单个 WhatsApp 群组，具有提及门控和更严格的工具策略：</p>
+                
+                <div class="code-wrapper">
+                    <div class="code-title">家庭 Agent 配置</div>
+                    <div class="code-block"><code>{
+  "agents": {
+    "list": [
+      {
+        "id": "family",
+        "name": "Family",
+        "workspace": "~/.openclaw/workspace-family",
+        "identity": { "name": "Family Bot" },
+        "groupChat": {
+          "mentionPatterns": ["@family", "@familybot", "@Family Bot"]
+        },
+        "sandbox": {
+          "mode": "all",
+          "scope": "agent"
+        },
+        "tools": {
+          "allow": [
+            "exec", "read", "sessions_list", "sessions_history",
+            "sessions_send", "sessions_spawn", "session_status"
+          ],
+          "deny": ["write", "edit", "apply_patch", "browser", "canvas", "nodes", "cron"]
+        }
+      }
+    ]
+  },
+  "bindings": [
+    {
+      "agentId": "family",
+      "match": {
+        "channel": "whatsapp",
+        "peer": { "kind": "group", "id": "120363999999999999@g.us" }
+      }
+    }
+  ]
+}</code></div>
+                </div>
+                
+                <div class="highlight-box warning">
+                    <p><strong>注意：</strong>工具允许/拒绝列表针对的是<strong>tools</strong>，而不是 skills。如果 skill 需要运行二进制文件，确保 <code>exec</code> 被允许并且二进制文件存在于沙盒中。</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sandbox 沙盒页 -->
+        <div id="sandbox" class="page">
+            <div class="card">
+                <h2><span class="emoji">🔒</span>Sandbox 沙盒配置</h2>
+                <div class="highlight-box">
+                    <p>OpenClaw 可以在<strong>沙盒后端内运行工具</strong>以减少爆炸半径。这是<strong>可选的</strong>，通过配置控制（<code>agents.defaults.sandbox</code> 或 <code>agents.list[].sandbox</code>）。如果沙盒关闭，工具在主机上运行。</p>
+                </div>
+                
+                <h3>什么会被沙盒化</h3>
+                <ul>
+                    <li>工具执行（<code>exec</code>, <code>read</code>, <code>write</code>, <code>edit</code>, <code>apply_patch</code>, <code>process</code> 等）</li>
+                    <li>可选的沙盒化浏览器（<code>agents.defaults.sandbox.browser</code>）</li>
+                </ul>
+                
+                <div class="highlight-box warning">
+                    <p><strong>不被沙盒化：</strong></p>
+                    <ul>
+                        <li>Gateway 进程本身</li>
+                        <li>任何明确允许在主机上运行的工具（如 <code>tools.elevated</code>）</li>
+                        <li><strong>⚠️ Elevated exec 在主机上运行并绕过沙盒！</strong></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2><span class="emoji">⚙️</span>沙盒模式 (Modes)</h2>
+                <p><code>agents.defaults.sandbox.mode</code> 控制<strong>何时</strong>使用沙盒：</p>
+                
+                <div class="grid-3">
+                    <div class="info-card">
+                        <h4><span class="tag red">"off"</span></h4>
+                        <p>不沙盒化</p>
+                    </div>
+                    <div class="info-card">
+                        <h4><span class="tag">"non-main"</span></h4>
+                        <p>仅沙盒化<strong>非主</strong>会话（默认）</p>
+                    </div>
+                    <div class="info-card">
+                        <h4><span class="tag green">"all"</span></h4>
+                        <p>每个会话都在沙盒中运行</p>
+                    </div>
+                </div>
+                
+                <div class="highlight-box warning" style="margin-top: 20px;">
+                    <p><strong>⚠️ 注意：</strong><code>"non-main"</code> 基于 <code>session.mainKey</code>（默认 <code>"main"</code>），而不是 Agent ID。群组/渠道会话使用自己的键，因此被视为 non-main 并会被沙盒化。</p>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2><span class="emoji">📦</span>沙盒作用域 (Scope)</h2>
+                <p><code>agents.defaults.sandbox.scope</code> 控制<strong>创建多少个容器</strong>：</p>
+                
+                <div class="grid-3">
+                    <div class="info-card">
+                        <h4><span class="tag blue">"session"</span></h4>
+                        <p><strong>（默认）</strong>每个会话一个容器</p>
+                    </div>
+                    <div class="info-card">
+                        <h4><span class="tag">"agent"</span></h4>
+                        <p>每个 Agent 一个容器</p>
+                    </div>
+                    <div class="info-card">
+                        <h4><span class="tag green">"shared"</span></h4>
+                        <p>一个容器由所有沙盒化会话共享</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2><span class="emoji">🖥️</span>沙盒后端 (Backend)</h2>
+                <p><code>agents.defaults.sandbox.backend</code> 控制<strong>哪个运行时</strong>提供沙盒：</p>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>后端</th>
+                                <th>运行位置</th>
+                                <th>设置</th>
+                                <th>最佳用途</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Docker</strong><br><span class="tag blue">默认</span></td>
+                                <td>本地容器</td>
+                                <td><code>scripts/sandbox-setup.sh</code></td>
+                                <td>本地开发，完全隔离</td>
+                            </tr>
+                            <tr>
+                                <td><strong>SSH</strong></td>
+                                <td>任何 SSH 可访问的主机</td>
+                                <td>SSH 密钥 + 目标主机</td>
+                                <td>卸载到远程机器</td>
+                            </tr>
+                            <tr>
+                                <td><strong>OpenShell</strong></td>
+                                <td>OpenShell 管理的沙盒</td>
+                                <td>启用 OpenShell 插件</td>
+                                <td>管理的远程沙盒，可选双向同步</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2><span class="emoji">📁</span>工作空间访问 (Workspace Access)</h2>
+                <p><code>agents.defaults.sandbox.workspaceAccess</code> 控制<strong>沙盒可以看到什么</strong>：</p>
+                
+                <div class="grid-3">
+                    <div class="info-card">
+                        <h4><span class="tag red">"none"</span></h4>
+                        <p><strong>（默认）</strong>工具看到沙盒工作空间下的 <code>~/.openclaw/sandboxes</code></p>
+                    </div>
+                    <div class="info-card">
+                        <h4><span class="tag">"ro"</span></h4>
+                        <p>只读挂载 Agent 工作空间到 <code>/agent</code>（禁用 <code>write</code>/<code>edit</code>/<code>apply_patch</code>）</p>
+                    </div>
+                    <div class="info-card">
+                        <h4><span class="tag green">"rw"</span></h4>
+                        <p>读写挂载 Agent 工作空间到 <code>/workspace</code></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2><span class="emoji">🔧</span>自定义绑定挂载</h2>
+                <p><code>agents.defaults.sandbox.docker.binds</code> 将额外的主机目录挂载到容器中。格式：<code>host:container:mode</code>（如 <code>"/home/user/source:/source:ro"</code>）。</p>
+                
+                <div class="code-wrapper">
+                    <div class="code-title">绑定挂载示例</div>
+                    <div class="code-block"><code>{
+  "agents": {
+    "defaults": {
+      "sandbox": {
+        "docker": {
+          "binds": [
+            "/home/user/source:/source:ro",
+            "/var/data/myapp:/data:ro"
+          ]
+        }
+      }
+    },
+    "list": [
+      {
+        "id": "build",
+        "sandbox": {
+          "docker": {
+            "binds": ["/mnt/cache:/cache:rw"]
+          }
+        }
+      }
+    ]
+  }
+}</code></div>
+                </div>
+                
+                <div class="highlight-box warning">
+                    <p><strong>安全注意：</strong></p>
+                    <ul>
+                        <li>绑定绕过沙盒文件系统：它们以你设置的任何模式（<code>:ro</code> 或 <code>:rw</code>）暴露主机路径</li>
+                        <li>OpenClaw 阻止危险的绑定源（如 <code>docker.sock</code>, <code>/etc</code>, <code>/proc</code>, <code>/sys</code>, <code>/dev</code>）</li>
+                        <li>敏感挂载（密钥、SSH 密钥、服务凭证）应该是 <code>:ro</code>，除非绝对必要</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2><span class="emoji">📦</span>镜像 + 设置</h2>
+                <p><strong>默认 Docker 镜像：</strong><code>openclaw-sandbox:bookworm-slim</code></p>
+                
+                <div class="code-wrapper">
+                    <div class="code-title">构建沙盒镜像</div>
+                    <div class="code-block"><code># 基础沙盒镜像
+scripts/sandbox-setup.sh
+
+# 功能更完整的沙盒镜像（包含 curl, jq, nodejs, python3, git）
+scripts/sandbox-common-setup.sh
+
+# 沙盒浏览器镜像
+scripts/sandbox-browser-setup.sh</code></div>
+                </div>
+                
+                <div class="highlight-box warning">
+                    <p><strong>注意：</strong>默认镜像<strong>不包含</strong> Node。如果 skill 需要 Node（或其他运行时），要么构建自定义镜像，要么通过 <code>sandbox.docker.setupCommand</code> 安装（需要网络出口 + 可写根目录 + root 用户）。</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 工具策略页 -->
+        <div id="tools" class="page">
+            <div class="card">
+                <h2><span class="emoji">🛠️</span>每 Agent 沙盒和工具配置</h2>
+                <div class="highlight-box">
+                    <p>多 Agent 设置中的每个 Agent 都可以覆盖全局沙盒和工具策略。本页涵盖每 Agent 配置、优先级规则和示例。</p>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2><span class="emoji">📊</span>配置优先级</h2>
+                <p>当全局（<code>agents.defaults.*</code>）和 Agent 特定（<code>agents.list[].*</code>）配置都存在时：</p>
+                
+                <h3>沙盒配置</h3>
+                <p>Agent 特定设置覆盖全局：</p>
+                <div class="code-wrapper">
+                    <div class="code-block" style="font-size: 0.85em;"><code>agents.list[].sandbox.mode > agents.defaults.sandbox.mode
+agents.list[].sandbox.scope > agents.defaults.sandbox.scope
+agents.list[].sandbox.workspaceRoot > agents.defaults.sandbox.workspaceRoot
+agents.list[].sandbox.workspaceAccess > agents.defaults.sandbox.workspaceAccess
+agents.list[].sandbox.docker.* > agents.defaults.sandbox.docker.*
+agents.list[].sandbox.browser.* > agents.defaults.sandbox.browser.*
+agents.list[].sandbox.prune.* > agents.defaults.sandbox.prune.*</code></div>
+                </div>
+                
+                <h3>工具限制</h3>
+                <p>过滤顺序：</p>
+                <ol>
+                    <li><strong>工具配置文件</strong> (<code>tools.profile</code> 或 <code>agents.list[].tools.profile</code>)</li>
+                    <li><strong>提供者工具配置文件</strong> (<code>tools.byProvider[provider].profile</code>)</li>
+                    <li><strong>全局工具策略</strong> (<code>tools.allow</code> / <code>tools.deny</code>)</li>
+                    <li><strong>提供者工具策略</strong> (<code>tools.byProvider[provider].allow/deny</code>)</li>
+                    <li><strong>Agent 特定工具策略</strong> (<code>agents.list[].tools.allow/deny</code>)</li>
+                    <li><strong>Agent 提供者策略</strong> (<code>agents.list[].tools.byProvider[provider].allow/deny</code>)</li>
+                    <li><strong>沙盒工具策略</strong> (<code>tools.sandbox.tools</code> 或 <code>agents.list[].tools.sandbox.tools</code>)</li>
+                    <li><strong>子 Agent 工具策略</strong> (<code>tools.subagents.tools</code>，如果适用)</li>
+                </ol>
+                
+                <div class="highlight-box warning">
+                    <p><strong>每个级别可以进一步限制工具，但不能恢复之前级别拒绝的工具。</strong></p>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2><span class="emoji">📝</span>工具限制示例</h2>
+                
+                <div class="grid-2">
+                    <div class="info-card">
+                        <h4>📖 只读 Agent</h4>
+                        <div class="code-block" style="font-size: 0.85em;"><code>{
+  "tools": {
+    "allow": ["read"],
+    "deny": ["exec", "write", "edit", "apply_patch", "process"]
+  }
+}</code></div>
+                    </div>
+                    <div class="info-card">
+                        <h4>✅ 安全执行 Agent</h4>
+                        <p>（无文件修改）</p>
+                        <div class="code-block" style="font-size: 0.85em;"><code>{
+  "tools": {
+    "allow": ["read", "exec", "process"],
+    "deny": ["write", "edit", "apply_patch", "browser", "gateway"]
+  }
+}</code></div>
+                    </div>
+                    <div class="info-card">
+                        <h4>💬 仅通信 Agent</h4>
+                        <div class="code-block" style="font-size: 0.85em;"><code>{
+  "tools": {
+    "sessions": { "visibility": "tree" },
+    "allow": [
+      "sessions_list", "sessions_send",
+      "sessions_history", "session_status"
+    ],
+    "deny": ["exec", "write", "edit", "apply_patch", "read", "browser"]
+  }
+}</code></div>
+                    </div>
+                    <div class="info-card">
+                        <h4>👨‍👩‍👧‍👦 家庭 Agent</h4>
+                        <div class="code-block" style="font-size: 0.85em;"><code>{
+  "sandbox": { "mode": "all", "scope": "agent" },
+  "tools": {
+    "allow": ["exec", "read", "sessions_*", "session_status"],
+    "deny": ["write", "edit", "apply_patch", "browser", "canvas", "nodes", "cron"]
+  }
+}</code></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2><span class="emoji">📋</span>示例：个人 + 受限家庭 Agent</h2>
+                
+                <div class="code-wrapper">
+                    <div class="code-title">完整配置示例</div>
+                    <div class="code-block"><code>{
+  "agents": {
+    "list": [
+      {
+        "id": "main",
+        "default": true,
+        "name": "Personal Assistant",
+        "workspace": "~/.openclaw/workspace",
+        "sandbox": { "mode": "off" }
+      },
+      {
+        "id": "family",
+        "name": "Family Bot",
+        "workspace": "~/.openclaw/workspace-family",
+        "sandbox": {
+          "mode": "all",
+          "scope": "agent"
+        },
+        "tools": {
+          "allow": ["read"],
+          "deny": ["exec", "write", "edit", "apply_patch", "process", "browser"]
+        }
+      }
+    ]
+  },
+  "bindings": [
+    {
+      "agentId": "family",
+      "match": {
+        "provider": "whatsapp",
+        "accountId": "*",
+        "peer": {
+          "kind": "group",
+          "id": "120363424282127706@g.us"
+        }
+      }
+    }
+  ]
+}</code></div>
+                </div>
+                
+                <div class="highlight-box success">
+                    <p><strong>结果：</strong></p>
+                    <ul>
+                        <li><code>main</code> Agent: 在主机上运行，完全工具访问</li>
+                        <li><code>family</code> Agent: 在 Docker 中运行（每个 Agent 一个容器），只有 <code>read</code> 工具</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2><span class="emoji">⚠️</span>常见陷阱："non-main"</h2>
+                <div class="highlight-box warning">
+                    <p><code>agents.defaults.sandbox.mode: "non-main"</code> 基于 <code>session.mainKey</code>（默认 <code>"main"</code>），而不是 Agent ID。</p>
+                    <p>群组/渠道会话总是获得自己的键，因此它们被视为 non-main 并会被沙盒化。</p>
+                    <p><strong>如果你想让一个 Agent 从不沙盒化，设置 <code>agents.list[].sandbox.mode: "off"</code>。</strong></p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 故障排除页 -->
+        <div id="troubleshoot" class="page">
+            <div class="card">
+                <h2><span class="emoji">🔧</span>测试步骤</h2>
+                
+                <div class="step-container">
+                    <div class="step">
+                        <div class="step-title">检查 Agent 解析</div>
+                        <div class="code-wrapper">
+                            <div class="code-block"><code>openclaw agents list --bindings</code></div>
+                        </div>
+                    </div>
+                    
+                    <div class="step">
+                        <div class="step-title">验证沙盒容器</div>
+                        <div class="code-wrapper">
+                            <div class="code-block"><code>docker ps --filter "name=openclaw-sbx-"</code></div>
+                        </div>
+                    </div>
+                    
+                    <div class="step">
+                        <div class="step-title">测试工具限制</div>
+                        <p>发送需要受限工具的消息，验证 Agent 无法使用被拒绝的工具</p>
+                    </div>
+                    
+                    <div class="step">
+                        <div class="step-title">监控日志</div>
+                        <div class="code-wrapper">
+                            <div class="code-block"><code>tail -f "${OPENCLAW_STATE_DIR:-$HOME/.openclaw}/logs/gateway.log" | grep -E "routing|sandbox|tools"</code></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2><span class="emoji">🐛</span>常见问题</h2>
+                
+                <h3>Agent 没有沙盒化，尽管设置了 <code>mode: "all"</code></h3>
+                <ul>
+                    <li>检查是否有全局 <code>agents.defaults.sandbox.mode</code> 覆盖它</li>
+                    <li>Agent 特定配置优先，所以设置 <code>agents.list[].sandbox.mode: "all"</code></li>
+                </ul>
+                
+                <h3>尽管有拒绝列表，工具仍然可用</h3>
+                <ul>
+                    <li>检查工具过滤顺序：全局 → Agent → 沙盒 → 子 Agent</li>
+                    <li>每个级别只能进一步限制，不能恢复</li>
+                    <li>使用日志验证：<code>[tools] filtering tools for agent:${agentId}</code></li>
+                </ul>
+                
+                <h3>容器没有每个 Agent 隔离</h3>
+                <ul>
+                    <li>在 Agent 特定沙盒配置中设置 <code>scope: "agent"</code></li>
+                    <li>默认是 <code>"session"</code>，会为每个会话创建一个容器</li>
+                </ul>
+            </div>
+            
+            <div class="card">
+                <h2><span class="emoji">🔄</span>从单 Agent 迁移</h2>
+                
+                <div class="grid-2">
+                    <div class="info-card">
+                        <h4>之前（单 Agent）</h4>
+                        <div class="code-block" style="font-size: 0.8em;"><code>{
+  "agents": {
+    "defaults": {
+      "workspace": "~/.openclaw/workspace",
+      "sandbox": { "mode": "non-main" }
+    }
+  },
+  "tools": {
+    "sandbox": {
+      "tools": {
+        "allow": ["read", "write", "apply_patch", "exec"],
+        "deny": []
+      }
+    }
+  }
+}</code></div>
+                    </div>
+                    <div class="info-card">
+                        <h4>之后（多 Agent）</h4>
+                        <div class="code-block" style="font-size: 0.8em;"><code>{
+  "agents": {
+    "list": [
+      {
+        "id": "main",
+        "default": true,
+        "workspace": "~/.openclaw/workspace",
+        "sandbox": { "mode": "off" }
+      }
+    ]
+  }
+}</code></div>
+                    </div>
+                </div>
+                
+                <div class="highlight-box success">
+                    <p>遗留的 <code>agent.*</code> 配置会被 <code>openclaw doctor</code> 迁移；以后优先使用 <code>agents.defaults</code> + <code>agents.list</code>。</p>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2><span class="emoji">📚</span>相关文档</h2>
+                <div class="grid-3">
+                    <div class="info-card">
+                        <h4>🔒 Sandboxing</h4>
+                        <p>完整的沙盒参考（模式、作用域、后端、镜像）</p>
+                        <p><code>/gateway/sandboxing</code></p>
+                    </div>
+                    <div class="info-card">
+                        <h4>🔍 调试指南</h4>
+                        <p>Sandbox vs Tool Policy vs Elevated</p>
+                        <p><code>/gateway/sandbox-vs-tool-policy-vs-elevated</code></p>
+                    </div>
+                    <div class="info-card">
+                        <h4>⚡ Elevated Mode</h4>
+                        <p>提升执行模式详解</p>
+                        <p><code>/tools/elevated</code></p>
+                    </div>
+                    <div class="info-card">
+                        <h4>📋 配置参考</h4>
+                        <p>沙盒配置详解</p>
+                        <p><code>/gateway/configuration-reference</code></p>
+                    </div>
+                    <div class="info-card">
+                        <h4>💬 会话管理</h4>
+                        <p>会话概念和管理</p>
+                        <p><code>/concepts/session</code></p>
+                    </div>
+                    <div class="info-card">
+                        <h4>🛠️ 技能</h4>
+                        <p>每个 Agent vs 共享技能</p>
+                        <p><code>/tools/skills#per-agent-vs-shared-skills</code></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <footer class="footer">
+            <p>📖 本指南基于 OpenClaw 官方文档整理</p>
+            <p>🤖 由 Mini 制作 | 📅 2026 年 3 月 24 日</p>
+            <p>🔗 官方文档：<a href="https://docs.openclaw.ai" style="color: #a8b5ff;">docs.openclaw.ai</a></p>
+        </footer>
+    </div>
+    
+    <script>
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            document.getElementById(pageId).classList.add('active');
+            event.target.classList.add('active');
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            
+            localStorage.setItem('openclaw-guide-page', pageId);
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedPage = localStorage.getItem('openclaw-guide-page') || 'intro';
+            const savedTab = document.querySelector(`.nav-tab[onclick="showPage('${savedPage}')"]`);
+            if (savedTab) {
+                savedTab.click();
+            }
+        });
+    </script>
+</body>
+</html>
